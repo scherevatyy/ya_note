@@ -1,4 +1,3 @@
-# news/tests/test_routes.py
 from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
@@ -22,7 +21,7 @@ class TestRoutes(TestCase):
             author_id=cls.author.id
         )
 
-    def test_pages_availability(self):
+    def test_pages_availability_for_anonymous_user(self):
         urls = (
             'notes:home',
             'users:login',
@@ -37,16 +36,19 @@ class TestRoutes(TestCase):
 
     def test_availability_for_edit_delete_and_detail(self):
         users_statuses = (
-            (self.author, HTTPStatus.OK),
-            (self.reader, HTTPStatus.NOT_FOUND),
+            (self.author, HTTPStatus.OK, 'notes:edit'),
+            (self.reader, HTTPStatus.NOT_FOUND, 'notes:edit'),
+            (self.author, HTTPStatus.OK, 'notes:delete'),
+            (self.reader, HTTPStatus.NOT_FOUND, 'notes:delete'),
+            (self.author, HTTPStatus.OK, 'notes:detail'),
+            (self.reader, HTTPStatus.NOT_FOUND, 'notes:detail'),
         )
-        for user, status in users_statuses:
+        for user, status, link in users_statuses:
             self.client.force_login(user)
-            for name in ('notes:edit', 'notes:delete', 'notes:detail'):
-                with self.subTest(user=user, name=name):
-                    url = reverse(name, args=(self.notes.slug,))
-                    response = self.client.get(url)
-                    self.assertEqual(response.status_code, status)
+            with self.subTest(user=user, link=link):
+                url = reverse(link, args=(self.notes.slug,))
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, status)
 
     def test_availability_for_list_add_and_done(self):
         urls = (

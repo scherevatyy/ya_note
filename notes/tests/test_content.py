@@ -3,13 +3,13 @@ from django.test import TestCase
 from django.urls import reverse
 
 from notes.models import Note
+from notes.forms import NoteForm
 
 User = get_user_model()
 
-NOTES_AMOUNT_FOR_READER = 0
-
 
 class TestNotesList(TestCase):
+    NOTES_AMOUNT_FOR_READER = 0
 
     @classmethod
     def setUpTestData(cls):
@@ -20,6 +20,7 @@ class TestNotesList(TestCase):
             text='Просто текст.',
             author_id=cls.author.id,
         )
+        cls.form = Note()
 
     def test_authorized_client_has_form(self):
         urls = (
@@ -32,6 +33,8 @@ class TestNotesList(TestCase):
                 url = reverse(name, args=args)
                 response = self.client.get(url)
                 self.assertIn('form', response.context)
+                form = response.context['form']
+                self.assertIsInstance(form, NoteForm)
 
     def test_notes_for_another_user(self):
         self.client.force_login(self.reader)
@@ -39,7 +42,7 @@ class TestNotesList(TestCase):
         response = self.client.get(url)
         object_list = response.context['object_list']
         notes_count = len(object_list)
-        self.assertEqual(notes_count, NOTES_AMOUNT_FOR_READER)
+        self.assertEqual(notes_count, self.NOTES_AMOUNT_FOR_READER)
 
     def test_note_in_list_for_author(self):
         self.client.force_login(self.author)

@@ -1,6 +1,6 @@
 from http import HTTPStatus
-from pytils.translit import slugify
 
+from pytils.translit import slugify
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -27,6 +27,7 @@ class TestNoteCreate(TestCase):
             'slug': cls.NOTE_SLUG,
             'title': cls.NOTE_TITLE,
             }
+        cls.expected_slug = slugify(cls.form_data['title'])
 
     def test_anonymous_user_cant_create_note(self):
         self.client.post(self.url, data=self.form_data)
@@ -65,8 +66,7 @@ class TestNoteCreate(TestCase):
         notes_count = Note.objects.count()
         self.assertEqual(notes_count, 1)
         note = Note.objects.get()
-        expected_slug = slugify(self.form_data['title'])
-        self.assertEqual(note.slug, expected_slug)
+        self.assertEqual(note.slug, self.expected_slug)
 
 
 class TestNoteEditDelete(TestCase):
